@@ -12,7 +12,8 @@ class Chamado extends Model
     'descricao',
     'prioridade',
     'status',
-    'responsavel_id'
+    'responsavel_id',
+    'setor'
 
    ];
 

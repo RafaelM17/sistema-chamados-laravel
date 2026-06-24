@@ -9,16 +9,27 @@ use App\Models\Responsavel;
 class ChamadoController extends Controller
 {
     public function index()
-    {
-        $chamados = Chamado::with('responsavel')->get();
-        return view('chamados.index', compact('chamados'));
-    }
+{
+       $chamados = Chamado::with('responsavel')
+        ->orderByRaw("
+            CASE 
+                WHEN status = 'aberto' THEN 1
+                WHEN status = 'em_andamento' THEN 2
+                WHEN status = 'em andamento' THEN 2
+                WHEN status = 'resolvido' THEN 3
+                ELSE 4
+            END ASC
+        ")->get();
 
-    public function create()
-    {
-        $responsaveis = Responsavel::all();
-        return view('chamados.create', compact('responsaveis'));
-    }
+    return view('chamados.index', compact('chamados'));
+}
+
+public function create()
+{
+    $responsaveis = Responsavel::all();
+    return view('chamados.create', compact('responsaveis'));
+}
+
 
 public function store(Request $request)
 {
@@ -71,23 +82,38 @@ public function store(Request $request)
         return view('chamados.edit', compact('chamado', 'responsaveis'));
     }
 
-    public function update(Request $request, string $id)
-    {
-        $chamado = Chamado::findOrFail($id);
+   public function update(Request $request, string $id)
+{
+    $chamado = Chamado::findOrFail($id);
 
-        $chamado->update([
-            'titulo' => $request->titulo,
-            'descricao' => $request->descricao,
-            'prioridade' => $request->prioridade,
-            'status' => $request->status,
-            'responsavel_id' => $request->responsavel_id,
-        ]);
+    $status = $request->status;
 
-        return redirect()->route('chamados.index');
+  
+    if ($status == 'em andamento') {
+        $status = 'em_andamento';
     }
+
+    $chamado->update([
+        'titulo' => $request->titulo,
+        'descricao' => $request->descricao,
+        'prioridade' => $request->prioridade,
+        'status' => $status,
+        'setor' => $request->setor,
+        'responsavel_id' => $request->responsavel_id,
+    ]);
+
+    return redirect()->route('chamados.index');
+}
 
     public function destroy(string $id)
     {
-        
+        $chamado = Chamado::findOrFail($id);
+
+        $chamado->delete();
+
+        return redirect()
+            ->route('chamados.index')
+            ->with('success', 'Chamado excluído com sucesso!');
+
     }
 }
